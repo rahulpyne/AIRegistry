@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Lifecycle{% endblock %}
+{% block main_class %}container wide{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>AI Operating Lifecycle</h1>
+  <p class="lede">Where this idea sits in the lifecycle, the artifacts each phase needs,
+     Business &amp; IT approvals, and document status.</p>
+</div>
+
+<div class="entry-switcher card">
+  <label>Idea
+    <select id="entry-select">
+      {% for e in entries %}
+      <option value="{{ e.id }}" {{ 'selected' if entry and e.id == entry.id }}>
+        {{ e.payload.use_case_title or e.title }}
+      </option>
+      {% endfor %}
+    </select>
+  </label>
+  {% if entry %}
+  <div class="entry-meta">
+    <span><b>{{ entry.payload.use_case_title or entry.title }}</b></span>
+    <span class="pill">{{ entry.payload.status or '—' }}</span>
+    <span class="muted">{{ entry.payload.business_area }}</span>
+    <span class="muted">· {{ entry.payload.data_classification or '—' }}</span>
+    {% if entry.payload.aia_trigger %}<span class="tag">AIA</span>{% endif %}
+    {% if entry.payload.pia_trigger %}<span class="tag">PIA</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if not entry %}
+  <div class="card muted">No entries yet. <a href="{{ url_for('form_page') }}">Submit an idea</a> to see its lifecycle.</div>
+{% else %}
+<div class="phase-board" data-entry-id="{{ entry.id }}">
+  {% for ph in board.phases %}
+  <section class="phase {{ 'current' if ph.is_current }}" style="--phase-color: {{ ph.color }}">
+    <header class="phase-head">
+      <div class="phase-num">{{ ph.number }}</div>
+      <div>
+        <h3>{{ ph.name }}{% if ph.is_current %}<span class="now-badge">CURRENT</span>{% endif %}</h3>
+        <p class="phase-obj">{{ ph.objective }}</p>
+      </div>
+    </header>
+    <div class="phase-meta">
+      <span><b>IT:</b> {{ ph.it_involvement }}</span>
+      <span><b>Data:</b> {{ ph.data_classification }}</span>
+    </div>
+
+    <div class="approvals">
+      {% for ap in ph.approvals %}
+      <button class="approval {{ 'approved' if ap.status == 'APPROVED' }}"
+              data-phase="{{ ph.number }}" data-team="{{ ap.team }}"
+              data-status="{{ ap.status }}">
+        {{ '✓' if ap.status == 'APPROVED' else '○' }} {{ ap.team|capitalize }}
+        {{ 'Approved' if ap.status == 'APPROVED' else 'Approval' }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <ul class="artifacts">
+      {% for art in ph.artifacts %}
+      {% if art.level != 'Not required' %}
+      <li class="artifact">
+        <div class="artifact-row">
+          <span class="artifact-name">{{ art.name }}{% if art.gov %}<span class="gov-tag">GC</span>{% endif %}</span>
+          <span class="level level-{{ art.level|lower|replace(' ','-')|replace('/','')|replace('+','') }}">{{ art.level }}</span>
+        </div>
+        <div class="artifact-actions">
+          {% if art.template_link %}
+            {% if art.template_link.startswith('/') or art.template_link.startswith('http') %}
+            <a class="tmpl-link" href="{{ art.template_link }}" target="_blank" rel="noopener">Template ↗</a>
+            {% else %}
+            <span class="tmpl-link muted" title="{{ art.template_link }}">Template</span>
+            {% endif %}
+          {% endif %}
+          {% if art.expects_upload %}
+          <label class="upload-btn">
+            Upload
+            <input type="file" class="doc-upload" data-phase="{{ ph.number }}" data-artifact="{{ art.key }}" hidden>
+          </label>
+          {% endif %}
+        </div>
+        {% if art.documents %}
+        <ul class="docs">
+          {% for d in art.documents %}
+          <li class="doc" data-doc-id="{{ d.id }}">
+            <a href="{{ url_for('serve_upload', rel_path=d.storage_path) }}" target="_blank" rel="noopener">{{ d.file_name }}</a>
+            <span class="status status-{{ d.status|lower|replace('-','') }}">{{ d.status }}</span>
+            <span class="doc-advance">
+              <button class="mini" data-status="IN-REVIEW">Review</button>
+              <button class="mini" data-status="APPROVED">Approve</button>
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+
+<section class="card gates">
+  <h2 class="section-label">AIA &amp; PIA Gates</h2>
+  <ul>
+    {% for g in board.gates %}
+    <li><b>{{ g.between }}</b> — {{ g.condition }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lifecycle.js') }}"></script>
+{% endblock %}

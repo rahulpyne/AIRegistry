@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Submit Idea{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>AI Registry Form</h1>
+  <p class="lede">Inventory an AI idea, experiment, prototype, or pilot. Early visibility, low friction —
+     share what you are building so we can spot reusable patterns and surface security &amp; privacy considerations.</p>
+</div>
+
+<form id="registry-form" class="card form">
+  <h2 class="section-label">Core details</h2>
+  <div class="grid-2">
+    <label>Use Case Title <span class="req">*</span>
+      <input name="use_case_title" required placeholder="HR/CAS Concierge Assistant">
+    </label>
+    <label>RDA / Organization <span class="req">*</span>
+      <input name="rda_organization" required value="PacifiCan">
+    </label>
+    <label>Business Area / Program <span class="req">*</span>
+      <input name="business_area" required placeholder="HR &amp; Corporate Administrative Services">
+    </label>
+    <label>Contact Person <span class="req">*</span>
+      <input name="contact_person" required placeholder="Joey Seto">
+    </label>
+  </div>
+
+  <label>Problem Statement <span class="req">*</span>
+    <textarea name="problem_statement" rows="3" required
+      placeholder="Describe what is manual, slow, repetitive, risky, inconsistent, or difficult today."></textarea>
+  </label>
+  <label>Expected Outcome / Measurable Result <span class="req">*</span>
+    <textarea name="expected_outcome" rows="2" required
+      placeholder="Use measurable or observable outcomes where possible."></textarea>
+  </label>
+  <div class="grid-2">
+    <label>AI Tool / Application Used <span class="req">*</span>
+      <input name="ai_tool" required placeholder="Azure AI Foundry, Azure AI Search, ...">
+    </label>
+    <label>Security / Privacy Considerations <span class="req">*</span>
+      <input name="security_privacy" required placeholder="Data classification, sensitive-data exclusions, human review.">
+    </label>
+  </div>
+  <label>Notes / Summary of Experience
+    <textarea name="notes" rows="2" placeholder="Lessons, status, blockers, next steps."></textarea>
+  </label>
+
+  <h2 class="section-label">Registry classification</h2>
+  <div class="grid-3">
+    {% for field, label in [
+        ('lifecycle_phase','Lifecycle Phase'), ('status','Status'),
+        ('data_classification','Data Classification'), ('solution_type','Solution Type'),
+        ('business_value','Business Value Category'), ('it_involvement','IT Involvement Needed'),
+        ('next_decision','Next Decision Needed')] %}
+    <label>{{ label }}
+      <select name="{{ field }}">
+        <option value="">—</option>
+        {% for opt in choices[field] %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endfor %}
+  </div>
+
+  <h2 class="section-label">AIA / PIA pre-screen <span class="hint">(Phase 1 trigger questions)</span></h2>
+  <div class="checks">
+    <label class="check"><input type="checkbox" name="aia_trigger">
+      Involves an automated decision affecting clients or employees? <span class="tag">AIA</span></label>
+    <label class="check"><input type="checkbox" name="pia_trigger">
+      Involves personal information? <span class="tag">PIA</span></label>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn primary">Submit to Registry</button>
+    <span id="form-msg" class="form-msg"></span>
+  </div>
+</form>
+
+<script>
+document.getElementById('registry-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const data = {};
+  new FormData(f).forEach((v, k) => data[k] = v);
+  data.aia_trigger = f.aia_trigger.checked;
+  data.pia_trigger = f.pia_trigger.checked;
+  const msg = document.getElementById('form-msg');
+  msg.textContent = 'Submitting…'; msg.className = 'form-msg';
+  try {
+    const res = await fetch('/api/registry', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+    const out = await res.json();
+    if (out.success) {
+      msg.textContent = '✓ Saved as ' + out.id;
+      msg.className = 'form-msg ok';
+      f.reset();
+      setTimeout(() => { window.location = '/lifecycle/' + out.id; }, 900);
+    } else {
+      msg.textContent = '✗ ' + out.error; msg.className = 'form-msg err';
+    }
+  } catch (err) {
+    msg.textContent = '✗ ' + err; msg.className = 'form-msg err';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Idea Graph{% endblock %}
+{% block main_class %}full{% endblock %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layout-base@2.0.1/layout-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cose-base@2.2.0/cose-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
+{% endblock %}
+{% block content %}
+<div class="graph-toolbar">
+  <div>
+    <h1>Idea Visualizer</h1>
+    <p class="lede">Emerging patterns across submitted AI ideas. Larger nodes are recurring themes;
+       branches drill into sub-categories and individual ideas.</p>
+  </div>
+  <div class="graph-controls">
+    <span id="graph-stats" class="stats"></span>
+    <button id="refresh-graph" class="btn small">↻ Refresh</button>
+  </div>
+</div>
+<div id="legend" class="legend">
+  <span><i class="dot lvl-cat"></i> Category</span>
+  <span><i class="dot lvl-sub"></i> Sub-category</span>
+  <span><i class="dot lvl-idea"></i> Idea</span>
+  <span class="legend-hint">Click an idea to open its lifecycle board.</span>
+</div>
+<div id="cy"></div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+{% endblock %}

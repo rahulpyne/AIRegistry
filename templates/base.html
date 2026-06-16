@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AI Registry{% endblock %} · PacifiCan</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-name">AI Registry</span>
+      <span class="brand-sub">PacifiCan · Strategy Framework for AI</span>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('graph_page') }}" class="{{ 'active' if request.endpoint == 'graph_page' }}">Idea Graph</a>
+      <a href="{{ url_for('form_page') }}" class="{{ 'active' if request.endpoint == 'form_page' }}">Submit Idea</a>
+      <a href="{{ url_for('entries_page') }}" class="{{ 'active' if request.endpoint == 'entries_page' }}">Entries</a>
+      <a href="{{ url_for('lifecycle_page') }}" class="{{ 'active' if request.endpoint == 'lifecycle_page' }}">Lifecycle</a>
+    </nav>
+  </header>
+  <main class="{% block main_class %}container{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

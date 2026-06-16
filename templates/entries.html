@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Entries{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Registry Entries</h1>
+  <p class="lede">{{ entries|length }} submitted idea{{ '' if entries|length == 1 else 's' }}.</p>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>Title</th><th>Business Area</th><th>Phase</th><th>Status</th><th>Classification</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      {% set p = e.payload %}
+      <tr>
+        <td class="strong">{{ p.use_case_title or e.title }}</td>
+        <td>{{ p.business_area }}</td>
+        <td>{{ p.lifecycle_phase or '—' }}</td>
+        <td><span class="pill">{{ p.status or '—' }}</span></td>
+        <td>{{ p.data_classification or '—' }}</td>
+        <td><a class="btn small" href="{{ url_for('lifecycle_page', entry_id=e.id) }}">Lifecycle →</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No entries yet. <a href="{{ url_for('form_page') }}">Submit one</a>.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
