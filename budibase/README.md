@@ -50,17 +50,22 @@ account and connect it as the MongoDB datasource (step 3) — same as the Azure-
 
 ## 2. Provision Azure
 
+**One-shot from the Azure Portal terminal (Cloud Shell):** follow
+[`azure/cloud-shell-deploy.md`](azure/cloud-shell-deploy.md) — fill your exact names in
+`azure/main.parameters.json`, then a single command builds and wires everything (secrets
+auto-generated):
+
+```bash
+az group create -n <your-rg> -l canadacentral
+az deployment group create -g <your-rg> -f azure/main.bicep -p @azure/main.parameters.json
+```
+
+**Or via the CLI script** (generates names + secrets, prints them once):
+
 ```bash
 az login
 az account set -s <subscription-id>
-# Option A — script:
 bash azure/provision.sh
-# Option B — Bicep:
-az group create -n rg-airegistry -l canadacentral
-az deployment group create -g rg-airegistry -f azure/main.bicep \
-  -p jwtSecret=$(openssl rand -base64 32) internalApiKey=$(openssl rand -base64 32) \
-     minioAccessKey=$(openssl rand -base64 32) minioSecretKey=$(openssl rand -base64 32) \
-     redisPassword=$(openssl rand -base64 32) couchdbPassword=$(openssl rand -base64 32)
 ```
 
 Both create: Cosmos DB for MongoDB (`airegistry` db with `registry_entries` +

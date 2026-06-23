@@ -1,21 +1,36 @@
 // AI Registry infra — Cosmos DB (Mongo API) + Storage (Azure Files) + App Service
 // for Containers running self-hosted Budibase.
 //
-// Deploy:
-//   az group create -n rg-airegistry -l canadacentral
-//   az deployment group create -g rg-airegistry -f main.bicep \
-//     -p jwtSecret=... internalApiKey=... minioAccessKey=... minioSecretKey=... \
-//        redisPassword=... couchdbPassword=...
-// (generate each secret with: openssl rand -base64 32)
+// One-shot deploy (Azure Cloud Shell):
+//   az group create -n <your-rg> -l canadacentral
+//   az deployment group create -g <your-rg> -f main.bicep -p @main.parameters.json
+//
+// Secrets default to newGuid() (generated at deploy time) so no secret params are
+// required. Resource names default to a unique-suffixed value but can be set in
+// main.parameters.json to your exact names. See cloud-shell-deploy.md.
 
 @description('Azure region. Canada Central for Protected B data residency.')
 param location string = 'canadacentral'
 
-@description('Short name prefix for resources.')
+@description('Short name prefix used for any name not set explicitly below.')
 param prefix string = 'airegistry'
+
+// --- exact resource names (override in main.parameters.json; must be globally unique
+//     where noted) ---
+@description('Cosmos DB account name (globally unique, 3-44 lowercase alphanumeric/hyphen).')
+param cosmosAccountName string = '${prefix}-cosmos-${uniqueString(resourceGroup().id)}'
 
 @description('Cosmos Mongo database name.')
 param cosmosDbName string = 'airegistry'
+
+@description('Storage account name (globally unique, 3-24 lowercase alphanumeric).')
+param storageAccountName string = toLower('${prefix}st${substring(uniqueString(resourceGroup().id), 0, 8)}')
+
+@description('App Service plan name.')
+param planName string = '${prefix}-plan'
+
+@description('Web app name (globally unique; becomes <name>.azurewebsites.net).')
+param webAppName string = '${prefix}-budibase-${uniqueString(resourceGroup().id)}'
 
 @description('App Service plan SKU. B1 = basic/cheap prototyping; P1v3 for production.')
 param appSku string = 'B1'
@@ -23,30 +38,25 @@ param appSku string = 'B1'
 @description('Enable Cosmos free tier ($0, one per subscription). Set false if already used.')
 param cosmosFreeTier bool = true
 
-// --- secrets (no defaults; pass at deploy time) ---
+// --- secrets (auto-generated; override only if you need fixed values) ---
 @secure()
-param jwtSecret string
+param jwtSecret string = newGuid()
 @secure()
-param internalApiKey string
+param internalApiKey string = newGuid()
 @secure()
-param minioAccessKey string
+param minioAccessKey string = newGuid()
 @secure()
-param minioSecretKey string
+param minioSecretKey string = newGuid()
 @secure()
-param redisPassword string
+param redisPassword string = newGuid()
 @secure()
-param couchdbPassword string
+param couchdbPassword string = newGuid()
 param couchdbUser string = 'admin'
 
-var suffix = uniqueString(resourceGroup().id)
-var cosmosName = '${prefix}-cosmos-${suffix}'
-var storageName = toLower('${prefix}st${substring(suffix, 0, 8)}')
-var planName = '${prefix}-plan'
-var webAppName = '${prefix}-budibase-${suffix}'
 var fileShareName = 'budibase-data'
 
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
-  name: cosmosName
+  name: cosmosAccountName
   location: location
   kind: 'MongoDB'
   properties: {
@@ -78,14 +88,14 @@ resource aiaResults 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases/coll
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageName
+  name: storageAccountName
   location: location
   sku: { name: 'Standard_LRS' }
   kind: 'StorageV2'
 }
 
 resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01' = {
-  name: '${storageName}/default/${fileShareName}'
+  name: '${storageAccountName}/default/${fileShareName}'
   properties: { shareQuota: 50 }
   dependsOn: [ storage ]
 }
@@ -123,7 +133,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       azureStorageAccounts: {
         budibasedata: {
           type: 'AzureFiles'
-          accountName: storageName
+          accountName: storageAccountName
           shareName: fileShareName
           mountPath: '/data'
           accessKey: storage.listKeys().keys[0].value
@@ -136,3 +146,5 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
 output budibaseUrl string = 'https://${webApp.properties.defaultHostName}'
 output cosmosAccountName string = cosmos.name
 output cosmosDbName string = cosmosDbName
+@description('Paste this into the Budibase MongoDB datasource. Treat as a secret.')
+output cosmosConnectionString string = cosmos.listConnectionStrings().connectionStrings[0].connectionString

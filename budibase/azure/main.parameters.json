@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "canadacentral" },
+
+    "cosmosAccountName": { "value": "REPLACE-cosmos-name" },
+    "cosmosDbName": { "value": "airegistry" },
+    "storageAccountName": { "value": "replacestoragename" },
+    "planName": { "value": "REPLACE-plan-name" },
+    "webAppName": { "value": "REPLACE-webapp-name" },
+
+    "appSku": { "value": "B1" },
+    "cosmosFreeTier": { "value": true }
+  }
+}
