@@ -17,6 +17,12 @@ param prefix string = 'airegistry'
 @description('Cosmos Mongo database name.')
 param cosmosDbName string = 'airegistry'
 
+@description('App Service plan SKU. B1 = basic/cheap prototyping; P1v3 for production.')
+param appSku string = 'B1'
+
+@description('Enable Cosmos free tier ($0, one per subscription). Set false if already used.')
+param cosmosFreeTier bool = true
+
 // --- secrets (no defaults; pass at deploy time) ---
 @secure()
 param jwtSecret string
@@ -46,6 +52,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   properties: {
     apiProperties: { serverVersion: '4.2' }
     databaseAccountOfferType: 'Standard'
+    enableFreeTier: cosmosFreeTier
     consistencyPolicy: { defaultConsistencyLevel: 'Session' }
     locations: [ { locationName: location, failoverPriority: 0, isZoneRedundant: false } ]
   }
@@ -86,7 +93,7 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-0
 resource plan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: planName
   location: location
-  sku: { name: 'P1v3', tier: 'PremiumV3' }
+  sku: { name: appSku }
   kind: 'linux'
   properties: { reserved: true }
 }
@@ -98,6 +105,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: plan.id
     siteConfig: {
       linuxFxVersion: 'DOCKER|budibase/budibase:latest'
+      alwaysOn: true
       appSettings: [
         { name: 'WEBSITES_PORT', value: '80' }
         { name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE', value: 'true' }

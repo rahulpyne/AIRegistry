@@ -11,6 +11,12 @@
 set -euo pipefail
 
 # ---- config (override via env before running) ----
+# Defaults target a BASIC / low-cost prototyping setup, very low traffic:
+#   - App Service B1 (cheapest tier that runs the Budibase container; ~1.75GB RAM).
+#     Free for 12 months on a new Azure free account (750 B1 hrs/mo), then ~CAD $15/mo.
+#   - Cosmos DB free tier: $0 (1000 RU/s + 25GB free). One free-tier account per
+#     subscription — set FREE_TIER=false if you've already used yours.
+# For production, override APP_SKU (e.g. P1V3) and set FREE_TIER=false.
 LOCATION="${LOCATION:-canadacentral}"
 RG="${RG:-rg-airegistry}"
 PREFIX="${PREFIX:-airegistry}"
@@ -21,6 +27,8 @@ FILE_SHARE="${FILE_SHARE:-budibase-data}"
 PLAN="${PLAN:-${PREFIX}-plan}"
 WEBAPP="${WEBAPP:-${PREFIX}-budibase-$RANDOM}"
 IMAGE="budibase/budibase:latest"
+APP_SKU="${APP_SKU:-B1}"           # B1 = basic/cheap; P1V3 for production
+FREE_TIER="${FREE_TIER:-true}"     # Cosmos free tier (set false if already used on this subscription)
 
 # ---- secrets (generated) ----
 gen() { openssl rand -base64 32 | tr -d '\n'; }
@@ -31,9 +39,11 @@ COUCHDB_USER="admin"
 echo "==> Resource group $RG ($LOCATION)"
 az group create -n "$RG" -l "$LOCATION" -o none
 
-echo "==> Cosmos DB for MongoDB account $COSMOS_ACCT"
+echo "==> Cosmos DB for MongoDB account $COSMOS_ACCT (free tier: $FREE_TIER)"
+FREE_FLAG=""
+[ "$FREE_TIER" = "true" ] && FREE_FLAG="--enable-free-tier true"
 az cosmosdb create -n "$COSMOS_ACCT" -g "$RG" --kind MongoDB \
-  --server-version 4.2 --default-consistency-level Session \
+  --server-version 4.2 --default-consistency-level Session $FREE_FLAG \
   --locations regionName="$LOCATION" failoverPriority=0 isZoneRedundant=false -o none
 
 echo "==> Cosmos database + collections"
@@ -51,9 +61,10 @@ STORAGE_KEY="$(az storage account keys list -n "$STORAGE_ACCT" -g "$RG" --query 
 az storage share-rm create --storage-account "$STORAGE_ACCT" -g "$RG" \
   -n "$FILE_SHARE" --quota 50 -o none
 
-echo "==> App Service plan (Linux) + web app for container"
-az appservice plan create -n "$PLAN" -g "$RG" --is-linux --sku P1V3 -o none
+echo "==> App Service plan (Linux, $APP_SKU) + web app for container"
+az appservice plan create -n "$PLAN" -g "$RG" --is-linux --sku "$APP_SKU" -o none
 az webapp create -n "$WEBAPP" -g "$RG" -p "$PLAN" --container-image-name "$IMAGE" -o none
+az webapp config set -g "$RG" -n "$WEBAPP" --always-on true -o none  # keep Budibase warm (B1+)
 
 echo "==> Mount Azure Files at /data and set port"
 az webapp config storage-account add -g "$RG" -n "$WEBAPP" \

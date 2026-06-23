@@ -18,7 +18,25 @@ budibase/
   app-export/          # the exported Budibase app (.tar.gz) — committed after the app is built
 ```
 
-## 1. (Optional) run Budibase locally first
+## Cost / tier (prototyping vs production)
+
+Defaults target a **basic, low-cost prototyping** setup for very low traffic:
+
+| Component | Prototype default | Cost |
+|---|---|---|
+| Cosmos DB for MongoDB | **free tier** (1000 RU/s + 25 GB) | **$0** (one free-tier account per subscription) |
+| App Service plan | **B1** Linux | **Free for 12 months** on a new Azure free account (750 B1 hrs/mo), then ~CAD $15/mo |
+| Storage (Azure Files) | Standard_LRS, pay-per-use | a few cents/month at this size |
+
+> There is **no truly $0 Azure option** for Budibase — the F1/Free App Service tier
+> can't run the container (needs ~2 GB RAM; Free doesn't support Linux containers). B1
+> is the cheapest that works. The only fully-free way to run Budibase is **locally with
+> Docker** (below), optionally pointed at the free-tier Cosmos in Azure.
+>
+> For production, override `APP_SKU=P1V3` and `FREE_TIER=false` (script) or `appSku` /
+> `cosmosFreeTier` (Bicep).
+
+## 1. Fully-free local option (Docker — $0)
 
 ```bash
 cp .env.example .env      # fill JWT_SECRET etc. with: openssl rand -base64 32
@@ -26,7 +44,9 @@ docker compose up -d
 open http://localhost:80  # create the admin account
 ```
 
-This is handy to build/iterate the app before pushing to Azure.
+Build and iterate the app here at no cost. For storage you can either use Budibase's
+built-in DB, or set `COSMOS_MONGO_CONNECTION_STRING` in `.env` to a free-tier Cosmos
+account and connect it as the MongoDB datasource (step 3) — same as the Azure-hosted flow.
 
 ## 2. Provision Azure
 
