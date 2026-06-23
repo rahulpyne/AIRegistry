@@ -1,74 +1,42 @@
-# AI Registry
+# AI Registry (PacifiCan)
 
-A lightweight, organization-wide app for PacifiCan to **inventory AI ideas**, **see emerging
-patterns** across them, and **track each idea through the AI Operating Lifecycle**. Built to mirror
-the `pacifican-bsp` stack (Flask + server-rendered templates + vanilla JS, gunicorn on Azure App
-Service) so it migrates to Azure with no rework.
+A low-code **Budibase** intake application, self-hosted on **Azure App Service for
+Containers**, that captures AI Registry submissions — all PacifiCan registry fields
+**plus the AIA pre-screen** — and stores each as a JSON document in **Azure Cosmos DB
+for MongoDB**. After submitting, the user sees a confirmation summary of everything
+received.
 
-Grounded in two source documents: `AI Registry Form Template` (Section 1 fields) and the
-`Product Management Plan for AI Operating Framework` (Section 3 phases, artifact map, and AIA/PIA gates).
+Source of truth for fields: `AI_Registry_Intake_Form_PacifiCan.docx`.
 
-## Three sections
+## Layout
 
-1. **Submit Idea** (`/form`) — the AI Registry Form. Captures the idea as a JSON document and stores it.
-2. **Idea Graph** (`/graph`) — an Obsidian-style semantic graph. Ideas cluster into categories →
-   sub-categories → individual ideas; larger nodes are recurring themes. Recomputed on each load so
-   it adapts as new ideas arrive. For executives spotting emerging patterns.
-3. **Lifecycle** (`/lifecycle/<id>`) — the 5 AI Operating Lifecycle phases as color-coded blocks for a
-   given idea, with per-phase artifact/template links, Business & IT approval toggles, and document
-   uploads showing status `UPLOADED → IN-REVIEW → APPROVED`.
-
-## Run locally (zero config)
-
-```bash
-pip install -r requirements.txt
-python app.py            # http://localhost:8000
+```
+budibase/                 # the current implementation
+  README.md               # build & Azure deployment guide
+  app-build-guide.md      # step-by-step Budibase app build (datasource, queries, screens)
+  docker-compose.yml      # self-hosted Budibase (single image)
+  .env.example            # secrets template
+  azure/                  # provision.sh (az CLI) + main.bicep
+  app-export/             # exported Budibase app (.tar.gz)
+docs/
+  intake-fields.md        # full field spec + Cosmos doc shape + future-AIA mapping
+archive/                  # retired implementations (not deployed)
+  legacy-flask-app/       # original Flask app (form + idea graph + lifecycle board)
+  legacy-graph-spa/       # standalone Cytoscape/Design-Component idea graph
 ```
 
-With no Supabase keys set, the app uses **LocalJSONStore** (`./data/*.json`) and auto-seeds ~16 dummy
-PacifiCan ideas so the graph is populated immediately. Uploaded files go to `./uploads`.
+## Quick start
 
-## Use Supabase
+1. Build the field understanding: [`docs/intake-fields.md`](docs/intake-fields.md).
+2. Provision Azure + Budibase: [`budibase/README.md`](budibase/README.md).
+3. Build the form: [`budibase/app-build-guide.md`](budibase/app-build-guide.md).
 
-1. Create a dedicated Supabase project.
-2. Run [`supabase_schema.sql`](supabase_schema.sql) in the SQL editor (creates `registry_entries`,
-   `documents`, `approvals`).
-3. Storage → New bucket → `airegistry-documents`.
-4. Copy `.env.example` → `.env` and set:
-   ```
-   SUPABASE_URL=https://<project>.supabase.co
-   SUPABASE_KEY=<service_role secret>   # server-side; bypasses RLS
-   ```
-5. Restart. The app now reads/writes Supabase (selected automatically when both vars are present).
+## Scope
 
-## Architecture
+**Built:** intake form (registry + AIA pre-screen) → Cosmos DB → confirmation screen.
 
-| File | Responsibility |
-|------|----------------|
-| `app.py` | Flask routes (pages + JSON APIs) |
-| `storage.py` | Storage abstraction — `SupabaseStore`, `LocalJSONStore`, `CosmosStore` (stub) |
-| `graph_builder.py` | TF-IDF + agglomerative clustering → 3-level graph JSON |
-| `lifecycle.py` | Lifecycle model: phases, artifact map, AIA/PIA gates (from the PMP doc) |
-| `seed_data.py` | ~16 dummy PacifiCan ideas across 5 clusters |
-
-All three backends in `storage.py` implement the same 8 methods, so swapping stores is one class.
-
-## Azure migration (later)
-
-- **Storage:** implement `CosmosStore` (containers keyed by `entryId`) — same pattern as
-  `pacifican-bsp/cosmos_client.py`. Uploaded files → Azure Blob Storage.
-- **Graph / semantics:** replace `graph_builder._vectorize` (TF-IDF) with **Azure OpenAI**
-  `text-embedding-3-small` embeddings and store vectors in **Azure AI Search**; cluster on the
-  embeddings and cache results. The graph-assembly code is unchanged.
-- **Hosting:** `startup.sh` already runs gunicorn for Azure App Service. Set the same env vars as
-  App Service application settings.
-
-## API reference
-
-| Method | Route | Purpose |
-|--------|-------|---------|
-| POST | `/api/registry` | Create a registry entry (JSON body) |
-| GET | `/api/graph` | Cytoscape graph elements for current entries |
-| POST | `/api/entries/<id>/documents` | Upload a document (multipart: file, phase, artifact) |
-| PATCH | `/api/documents/<doc_id>` | Set status `UPLOADED`/`IN-REVIEW`/`APPROVED` |
-| PATCH | `/api/entries/<id>/approvals` | Set `BUSINESS`/`IT` approval for a phase |
+**Deferred (designed-for, not built):** the agentic step that auto-fills the GC AIA
+questionnaire, computes the Impact Level (I–IV) locally, and generates the GC AIA report
+(the "TDS certificate"). The form already captures the full AIA pre-screen into
+`aia_prescreen`, and an `aia_results` Cosmos collection is reserved for it. See the
+mapping table at the end of `docs/intake-fields.md`.

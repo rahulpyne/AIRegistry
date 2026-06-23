@@ -1,0 +1,38 @@
+# Self-hosted Budibase — single all-in-one image.
+# Bundles CouchDB (app definitions), MinIO (assets/attachments), Redis and Caddy.
+# Used for local testing and as the container Azure App Service for Containers runs.
+#
+# All persistent state lives under /data inside the container — on Azure this path is
+# mounted to an Azure Files share so CouchDB/MinIO survive container restarts.
+#
+# Secrets below are placeholders. Copy .env.example -> .env and fill real values;
+# never commit real secrets.
+
+services:
+  budibase:
+    image: budibase/budibase:latest
+    container_name: airegistry-budibase
+    restart: unless-stopped
+    ports:
+      - "80:80"            # Budibase serves the builder + published apps on port 80
+    environment:
+      # --- required secrets (generate with `openssl rand -base64 32`) ---
+      JWT_SECRET: ${JWT_SECRET}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      COUCHDB_USER: ${COUCHDB_USER}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD}
+      # --- first-run admin (optional; lets you skip the manual setup screen) ---
+      BB_ADMIN_USER_EMAIL: ${BB_ADMIN_USER_EMAIL}
+      BB_ADMIN_USER_PASSWORD: ${BB_ADMIN_USER_PASSWORD}
+      # --- ports (defaults; leave as-is) ---
+      MAIN_PORT: 80
+      APP_PORT: 4002
+      WORKER_PORT: 4003
+    volumes:
+      - bbdata:/data       # on Azure this is replaced by the Azure Files mount at /data
+
+volumes:
+  bbdata:
