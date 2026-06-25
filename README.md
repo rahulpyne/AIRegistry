@@ -5,7 +5,8 @@ that captures AI Registry submissions — all PacifiCan registry fields **plus t
 pre-screen** — and stores each as a JSON document in **Azure Cosmos DB** (MongoDB API).
 After submitting, the user sees a confirmation with the saved reference id.
 
-Source of truth for fields: `AI_Registry_Intake_Form_PacifiCan.docx`.
+Repo: <https://github.com/PacifiCan/AIRegistry> · Source of truth for fields:
+`AI_Registry_Intake_Form_PacifiCan.docx`.
 
 ## Layout
 
@@ -21,6 +22,7 @@ azure/
   deploy.md               # deployment guide (Azure Cloud Shell)
 docs/
   intake-fields.md        # full field spec + Cosmos doc shape + future-AIA mapping
+  editing-the-form.md     # how to add/change form fields
 archive/                  # retired implementations (not deployed)
   legacy-flask-app/       # original Flask app (form + idea graph + lifecycle board)
   legacy-graph-spa/       # standalone Cytoscape/Design-Component idea graph
@@ -28,10 +30,15 @@ archive/                  # retired implementations (not deployed)
 
 ## Quick start
 
+```bash
+git clone https://github.com/PacifiCan/AIRegistry.git
+```
+
 1. Understand the fields: [`docs/intake-fields.md`](docs/intake-fields.md).
-2. Run locally: `cd app && cp .env.example .env` (add your Cosmos connection string),
+2. Edit / add form fields: [`docs/editing-the-form.md`](docs/editing-the-form.md).
+3. Run locally: `cd app && cp .env.example .env` (add your Cosmos connection string),
    `npm install && npm start`, open http://localhost:8080.
-3. Deploy to Azure: [`azure/deploy.md`](azure/deploy.md).
+4. Deploy to Azure: [`azure/deploy.md`](azure/deploy.md).
 
 ## Stack
 

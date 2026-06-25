@@ -18,7 +18,7 @@ azure/
 
 ```bash
 az account set --subscription "f4c089ff-3083-41b3-a786-f98bd759ce03"
-git clone https://github.com/rahulpyne/AIRegistry.git   # or: cd AIRegistry && git pull
+git clone https://github.com/PacifiCan/AIRegistry.git   # or: cd AIRegistry && git pull
 cd AIRegistry/app
 bash ../azure/deploy.sh
 ```
