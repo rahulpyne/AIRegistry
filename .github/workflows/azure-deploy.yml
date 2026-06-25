@@ -1,0 +1,47 @@
+name: Deploy to Azure App Service
+
+# Auto-deploys the SurveyJS app (in app/) to the airegistry-form web app on every
+# push to main. Requires the repo secret AZURE_WEBAPP_PUBLISH_PROFILE (see
+# azure/auto-deploy.md). App settings (Cosmos connection string) live on the web app
+# and are NOT touched by this workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/azure-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-airegistry-form
+  cancel-in-progress: true
+
+env:
+  AZURE_WEBAPP_NAME: airegistry-form
+  APP_DIR: app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install production dependencies
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci --omit=dev
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.APP_DIR }}

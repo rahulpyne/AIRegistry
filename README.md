@@ -39,6 +39,7 @@ git clone https://github.com/PacifiCan/AIRegistry.git
 3. Run locally: `cd app && cp .env.example .env` (add your Cosmos connection string),
    `npm install && npm start`, open http://localhost:8080.
 4. Deploy to Azure: [`azure/deploy.md`](azure/deploy.md).
+5. Auto-deploy on push (CI/CD): [`azure/auto-deploy.md`](azure/auto-deploy.md).
 
 ## Stack
 
