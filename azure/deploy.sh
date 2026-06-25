@@ -36,9 +36,15 @@ echo "==> Fetch Cosmos connection string"
 COSMOS_CONN="$(az cosmosdb keys list -n "$COSMOS_ACCT" -g "$RG" --type connection-strings \
   --query 'connectionStrings[0].connectionString' -o tsv)"
 
-echo "==> Deploy Node app to App Service ($SKU) — builds & uploads the current directory"
+# Pick a supported Linux Node runtime (versions available vary by CLI/region).
+RUNTIME="${RUNTIME:-}"
+if [ -z "$RUNTIME" ]; then
+  RUNTIME="$(az webapp list-runtimes --os linux -o tsv 2>/dev/null | grep -i '^NODE' | head -1)"
+  [ -z "$RUNTIME" ] && RUNTIME="NODE:22-lts"
+fi
+echo "==> Deploy Node app to App Service ($SKU) using runtime '$RUNTIME'"
 az webapp up --name "$APP" --resource-group "$RG" --location "$LOCATION" \
-  --plan "$PLAN" --sku "$SKU" --os-type Linux --runtime "NODE:20-lts"
+  --plan "$PLAN" --sku "$SKU" --os-type Linux --runtime "$RUNTIME"
 
 echo "==> Set application settings (Cosmos + build)"
 az webapp config appsettings set -g "$RG" -n "$APP" --settings \
