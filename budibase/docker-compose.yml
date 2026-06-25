@@ -9,9 +9,9 @@
 # never commit real secrets.
 
 services:
-  budibase:
+  airegistry:
     image: budibase/budibase:latest
-    container_name: airegistry-budibase
+    container_name: airegistry
     restart: unless-stopped
     ports:
       - "80:80"            # Budibase serves the builder + published apps on port 80
@@ -32,7 +32,7 @@ services:
       APP_PORT: 4002
       WORKER_PORT: 4003
     volumes:
-      - bbdata:/data       # on Azure this is replaced by the Azure Files mount at /data
+      - airegistrydata:/data   # on Azure this is replaced by the Azure Files mount at /data
 
 volumes:
-  bbdata:
+  airegistrydata:

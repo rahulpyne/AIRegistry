@@ -23,9 +23,9 @@ PREFIX="${PREFIX:-airegistry}"
 COSMOS_ACCT="${COSMOS_ACCT:-${PREFIX}-cosmos-$RANDOM}"
 COSMOS_DB="${COSMOS_DB:-airegistry}"
 STORAGE_ACCT="${STORAGE_ACCT:-${PREFIX}store$RANDOM}"   # 3-24 lowercase alnum
-FILE_SHARE="${FILE_SHARE:-budibase-data}"
+FILE_SHARE="${FILE_SHARE:-airegistry-data}"
 PLAN="${PLAN:-${PREFIX}-plan}"
-WEBAPP="${WEBAPP:-${PREFIX}-budibase-$RANDOM}"
+WEBAPP="${WEBAPP:-${PREFIX}-$RANDOM}"
 IMAGE="budibase/budibase:latest"
 APP_SKU="${APP_SKU:-B1}"           # B1 = basic/cheap; P1V3 for production
 FREE_TIER="${FREE_TIER:-true}"     # Cosmos free tier (set false if already used on this subscription)
@@ -68,7 +68,7 @@ az webapp config set -g "$RG" -n "$WEBAPP" --always-on true -o none  # keep Budi
 
 echo "==> Mount Azure Files at /data and set port"
 az webapp config storage-account add -g "$RG" -n "$WEBAPP" \
-  --custom-id budibasedata --storage-type AzureFiles \
+  --custom-id airegistrydata --storage-type AzureFiles \
   --account-name "$STORAGE_ACCT" --share-name "$FILE_SHARE" \
   --access-key "$STORAGE_KEY" --mount-path /data -o none
 az webapp config appsettings set -g "$RG" -n "$WEBAPP" --settings \

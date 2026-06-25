@@ -30,7 +30,7 @@ param storageAccountName string = toLower('${prefix}st${substring(uniqueString(r
 param planName string = '${prefix}-plan'
 
 @description('Web app name (globally unique; becomes <name>.azurewebsites.net).')
-param webAppName string = '${prefix}-budibase-${uniqueString(resourceGroup().id)}'
+param webAppName string = '${prefix}-${uniqueString(resourceGroup().id)}'
 
 @description('App Service plan SKU. B1 = basic/cheap prototyping; P1v3 for production.')
 param appSku string = 'B1'
@@ -53,7 +53,7 @@ param redisPassword string = newGuid()
 param couchdbPassword string = newGuid()
 param couchdbUser string = 'admin'
 
-var fileShareName = 'budibase-data'
+var fileShareName = 'airegistry-data'
 
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: cosmosAccountName
@@ -131,7 +131,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'COUCHDB_PASSWORD', value: couchdbPassword }
       ]
       azureStorageAccounts: {
-        budibasedata: {
+        airegistrydata: {
           type: 'AzureFiles'
           accountName: storageAccountName
           shareName: fileShareName
