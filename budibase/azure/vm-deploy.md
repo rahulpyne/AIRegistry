@@ -37,6 +37,21 @@ Same as before — Cosmos is reached over its public endpoint:
 - The public IP can change on start/stop. Make it static if you want a stable address:
   `az network public-ip update -g AIRegistry -n airegistry-vmPublicIP --allocation-method Static`.
 
+## Troubleshooting: `SkuNotAvailable` / Capacity Restrictions
+
+If `az vm create` fails with `SkuNotAvailable ... Capacity Restrictions` for the size,
+that size has no capacity in the region for your subscription. Find an available 2-vCPU
+size and pass it via `SIZE`:
+
+```bash
+az vm list-skus -l canadacentral --resource-type virtualMachines --all \
+  --query "[?length(restrictions)==\`0\` && capabilities[?name=='vCPUs' && value=='2']].name" -o tsv | sort -u
+SIZE=Standard_D2as_v5 bash vm-deploy.sh     # use any size from the list above
+```
+
+If the whole region is constrained, try another Canadian region (Cosmos stays reachable
+cross-region): `LOCATION=canadaeast SIZE=Standard_D2as_v5 bash vm-deploy.sh`.
+
 ## Notes
 
 - HTTP only. For HTTPS/a custom domain, point a DNS name at the IP and put Caddy/Nginx
