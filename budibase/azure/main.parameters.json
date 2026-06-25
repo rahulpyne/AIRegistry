@@ -4,11 +4,11 @@
   "parameters": {
     "location": { "value": "canadacentral" },
 
-    "cosmosAccountName": { "value": "REPLACE-cosmos-name" },
+    "cosmosAccountName": { "value": "airegistry-cosmos" },
     "cosmosDbName": { "value": "airegistry" },
-    "storageAccountName": { "value": "replacestoragename" },
-    "planName": { "value": "REPLACE-plan-name" },
-    "webAppName": { "value": "REPLACE-webapp-name" },
+    "storageAccountName": { "value": "airegistrystore" },
+    "planName": { "value": "airegistry-plan" },
+    "webAppName": { "value": "airegistry" },
 
     "appSku": { "value": "B1" },
     "cosmosFreeTier": { "value": true }
