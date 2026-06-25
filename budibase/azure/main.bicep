@@ -53,7 +53,11 @@ param redisPassword string = newGuid()
 param couchdbPassword string = newGuid()
 param couchdbUser string = 'admin'
 
-var fileShareName = 'airegistry-data'
+// Only CouchDB (the app definitions) is persisted. MinIO (object store) CANNOT run on
+// an Azure Files SMB mount — it fails with "Unable to write to the backend" — so it runs
+// on the container's local disk. Our intake form has no file uploads, so ephemeral MinIO
+// is acceptable; note a published app may need re-publishing after an App Service restart.
+var fileShareName = 'airegistry-couch'
 
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: cosmosAccountName
@@ -135,7 +139,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
           type: 'AzureFiles'
           accountName: storageAccountName
           shareName: fileShareName
-          mountPath: '/data'
+          mountPath: '/data/couch'
           accessKey: storage.listKeys().keys[0].value
         }
       }

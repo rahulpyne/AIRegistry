@@ -80,6 +80,33 @@ You'll get `budibaseUrl` and `cosmosConnectionString`.
    mapping, and the screens), then **Publish**.
 4. Verify: submit a test entry → Portal → Cosmos → Data Explorer → `registry_entries`.
 
+## Troubleshooting: 502 Bad Gateway on first load
+
+If the site returns **502** and `az webapp log tail` shows
+`MinIO ... FATAL Unable to initialize backend: Unable to write to the backend`:
+
+MinIO (Budibase's object store) **cannot run on an Azure Files SMB mount**. The Bicep
+here already mounts the share at **`/data/couch`** (CouchDB only) and leaves MinIO on the
+container's local disk, which avoids this. If you deployed an older revision that mounted
+the whole `/data`, fix it in place:
+
+```bash
+RG=AIRegistry; APP=airegistry; SA=airegistrystore
+KEY=$(az storage account keys list -n $SA -g $RG --query '[0].value' -o tsv)
+az storage share-rm create --storage-account $SA -g $RG -n airegistry-couch --quota 50
+az webapp config storage-account delete -g $RG -n $APP --custom-id airegistrydata
+az webapp config storage-account add -g $RG -n $APP \
+  --custom-id couch --storage-type AzureFiles \
+  --account-name $SA --share-name airegistry-couch \
+  --access-key "$KEY" --mount-path /data/couch
+az webapp restart -g $RG -n $APP
+```
+
+Trade-off: MinIO is ephemeral, so after an App Service restart you may need to **re-publish**
+the app (one click). The app *design* is safe in CouchDB on the persisted share. The intake
+form has no file-upload fields, so no user data lives in MinIO. For full durability of
+everything, run Budibase on a small VM with an ext4 data disk instead of App Service.
+
 ## Notes
 
 - **Re-running the deployment** regenerates the auto `newGuid()` secrets, which can

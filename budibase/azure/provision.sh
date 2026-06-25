@@ -23,7 +23,7 @@ PREFIX="${PREFIX:-airegistry}"
 COSMOS_ACCT="${COSMOS_ACCT:-${PREFIX}-cosmos-$RANDOM}"
 COSMOS_DB="${COSMOS_DB:-airegistry}"
 STORAGE_ACCT="${STORAGE_ACCT:-${PREFIX}store$RANDOM}"   # 3-24 lowercase alnum
-FILE_SHARE="${FILE_SHARE:-airegistry-data}"
+FILE_SHARE="${FILE_SHARE:-airegistry-couch}"
 PLAN="${PLAN:-${PREFIX}-plan}"
 WEBAPP="${WEBAPP:-${PREFIX}-$RANDOM}"
 IMAGE="budibase/budibase:latest"
@@ -54,7 +54,7 @@ az cosmosdb mongodb collection create -a "$COSMOS_ACCT" -g "$RG" -d "$COSMOS_DB"
 az cosmosdb mongodb collection create -a "$COSMOS_ACCT" -g "$RG" -d "$COSMOS_DB" \
   -n aia_results --shard _id -o none
 
-echo "==> Storage account + Azure Files share (Budibase /data persistence)"
+echo "==> Storage account + Azure Files share (CouchDB persistence only)"
 az storage account create -n "$STORAGE_ACCT" -g "$RG" -l "$LOCATION" \
   --sku Standard_LRS --kind StorageV2 -o none
 STORAGE_KEY="$(az storage account keys list -n "$STORAGE_ACCT" -g "$RG" --query '[0].value' -o tsv)"
@@ -66,11 +66,14 @@ az appservice plan create -n "$PLAN" -g "$RG" --is-linux --sku "$APP_SKU" -o non
 az webapp create -n "$WEBAPP" -g "$RG" -p "$PLAN" --container-image-name "$IMAGE" -o none
 az webapp config set -g "$RG" -n "$WEBAPP" --always-on true -o none  # keep Budibase warm (B1+)
 
-echo "==> Mount Azure Files at /data and set port"
+# Mount Azure Files at /data/couch ONLY. MinIO can't run on SMB (fails with "Unable to
+# write to the backend"), so it stays on the container's local disk; only CouchDB (the
+# app definitions) is persisted.
+echo "==> Mount Azure Files at /data/couch and set port"
 az webapp config storage-account add -g "$RG" -n "$WEBAPP" \
-  --custom-id airegistrydata --storage-type AzureFiles \
+  --custom-id couch --storage-type AzureFiles \
   --account-name "$STORAGE_ACCT" --share-name "$FILE_SHARE" \
-  --access-key "$STORAGE_KEY" --mount-path /data -o none
+  --access-key "$STORAGE_KEY" --mount-path /data/couch -o none
 az webapp config appsettings set -g "$RG" -n "$WEBAPP" --settings \
   WEBSITES_PORT=80 WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
   JWT_SECRET="$JWT_SECRET" MINIO_ACCESS_KEY="$MINIO_ACCESS_KEY" \
