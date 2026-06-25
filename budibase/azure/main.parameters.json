@@ -10,7 +10,7 @@
     "planName": { "value": "airegistry-plan" },
     "webAppName": { "value": "airegistry" },
 
-    "appSku": { "value": "B1" },
+    "appSku": { "value": "B2" },
     "cosmosFreeTier": { "value": true }
   }
 }
