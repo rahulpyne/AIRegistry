@@ -1,7 +1,8 @@
 __pycache__/
 *.pyc
 .env
-budibase/.env
+app/.env
+node_modules/
 data/
 uploads/
 .venv/

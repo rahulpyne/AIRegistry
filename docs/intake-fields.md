@@ -1,8 +1,9 @@
 # AI Registry — Intake Field Spec
 
 Source of truth: **`AI_Registry_Intake_Form_PacifiCan.docx`** (PacifiCan · AI Operating
-Lifecycle Artifact, rev 1.0). This is the spec the Budibase intake form is built from
-and the shape each submission takes in **Cosmos DB for MongoDB** (`registry_entries`).
+Lifecycle Artifact, rev 1.0). This is the spec the SurveyJS intake form is built from
+(`app/public/survey.js`) and the shape each submission takes in **Cosmos DB for MongoDB**
+(`registry_entries`).
 
 Conventions:
 - **Req** = required before triage.
