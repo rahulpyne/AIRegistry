@@ -39,7 +39,7 @@ COSMOS_CONN="$(az cosmosdb keys list -n "$COSMOS_ACCT" -g "$RG" --type connectio
 # Pick a supported Linux Node runtime (versions available vary by CLI/region).
 RUNTIME="${RUNTIME:-}"
 if [ -z "$RUNTIME" ]; then
-  RUNTIME="$(az webapp list-runtimes --os linux -o tsv 2>/dev/null | grep -i '^NODE' | head -1)"
+  RUNTIME="$(az webapp list-runtimes --os linux --query "[?runtime=='Node'].config | [0]" -o tsv 2>/dev/null | tr '|' ':')"
   [ -z "$RUNTIME" ] && RUNTIME="NODE:22-lts"
 fi
 echo "==> Deploy Node app to App Service ($SKU) using runtime '$RUNTIME'"
