@@ -10,31 +10,35 @@ Target App Service:
 
 ## One-time setup
 
-### 1. Get the publish profile (Cloud Shell or local `az`)
+### 1. Enable SCM basic auth (required)
+
+Publish-profile deploys need SCM basic auth, which is **off by default** on new App
+Services. Without it the deploy fails with *"Publish profile is invalid for app-name…"*.
+
+```bash
+az resource update -g airegistry --namespace Microsoft.Web \
+  --resource-type basicPublishingCredentialsPolicies --name scm \
+  --parent sites/airegistry-form --set properties.allow=true
+```
+
+### 2. Get the publish profile (Cloud Shell or local `az`)
 
 ```bash
 az webapp deployment list-publishing-profiles \
   -g airegistry -n airegistry-form --xml
 ```
 
-Copy the entire XML output.
+Copy the entire XML output. (Fetch this *after* step 1 — a profile fetched while basic
+auth was disabled won't authenticate.)
 
-> If this errors with *"basic authentication is disabled"*, enable SCM basic auth
-> (needed for publish-profile deploys), then re-run the command:
-> ```bash
-> az resource update -g airegistry --namespace Microsoft.Web \
->   --resource-type basicPublishingCredentialsPolicies --name scm \
->   --parent sites/airegistry-form --set properties.allow=true
-> ```
-
-### 2. Add it as a GitHub secret
+### 3. Add it as a GitHub secret
 
 In **github.com/PacifiCan/AIRegistry → Settings → Secrets and variables → Actions →
 New repository secret**:
 - Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
-- Value: the XML from step 1
+- Value: the XML from step 2
 
-### 3. Tell App Service not to rebuild on deploy
+### 4. Tell App Service not to rebuild on deploy
 
 The workflow already runs `npm ci`, so the deployed package includes `node_modules` —
 turn off the server-side build to avoid a redundant rebuild:
