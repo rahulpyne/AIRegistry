@@ -10,7 +10,7 @@
 
 services:
   airegistry:
-    image: budibase/budibase:latest
+    image: budibase/budibase:3.22.0   # pinned pre-LiteLLM; "latest" 502s (Budibase #18090)
     container_name: airegistry
     restart: unless-stopped
     ports:

@@ -35,6 +35,9 @@ param webAppName string = '${prefix}-${uniqueString(resourceGroup().id)}'
 @description('App Service plan SKU. B1 = basic/cheap prototyping; P1v3 for production.')
 param appSku string = 'B1'
 
+@description('Budibase image tag. Pinned to a pre-LiteLLM build; "latest" currently fails on App Service — bundled LiteLLM Postgres times out (Budibase issue #18090).')
+param budibaseImageTag string = '3.22.0'
+
 @description('Enable Cosmos free tier ($0, one per subscription). Set false if already used.')
 param cosmosFreeTier bool = true
 
@@ -118,7 +121,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   properties: {
     serverFarmId: plan.id
     siteConfig: {
-      linuxFxVersion: 'DOCKER|budibase/budibase:latest'
+      linuxFxVersion: 'DOCKER|budibase/budibase:${budibaseImageTag}'
       alwaysOn: true
       appSettings: [
         { name: 'WEBSITES_PORT', value: '80' }

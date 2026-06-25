@@ -26,7 +26,9 @@ STORAGE_ACCT="${STORAGE_ACCT:-${PREFIX}store$RANDOM}"   # 3-24 lowercase alnum
 FILE_SHARE="${FILE_SHARE:-airegistry-couch}"
 PLAN="${PLAN:-${PREFIX}-plan}"
 WEBAPP="${WEBAPP:-${PREFIX}-$RANDOM}"
-IMAGE="budibase/budibase:latest"
+# Pinned to a pre-LiteLLM build. "latest" currently fails on App Service: the bundled
+# LiteLLM Postgres times out on boot and the app 502s (Budibase issue #18090).
+IMAGE="budibase/budibase:3.22.0"
 APP_SKU="${APP_SKU:-B1}"           # B1 = basic/cheap; P1V3 for production
 FREE_TIER="${FREE_TIER:-true}"     # Cosmos free tier (set false if already used on this subscription)
 

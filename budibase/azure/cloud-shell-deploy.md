@@ -125,6 +125,28 @@ stack — scale up (Budibase's own minimum is ~2 GB):
 az appservice plan update -g AIRegistry -n airegistry-plan --sku B2
 ```
 
+## Troubleshooting: 502 with LiteLLM Postgres errors (`latest` image)
+
+If logs show `Timed out waiting for internal LiteLLM postgres to start` /
+`Can't reach database server at 127.0.0.1:5432` / `relation "public.LiteLLM_Config" does
+not exist`: the `budibase/budibase:latest` image bundles a LiteLLM AI service whose
+Postgres fails to start on App Service, blocking the main app (Budibase issue #18090).
+The Bicep/script here pin to **`budibase/budibase:3.22.0`** (pre-LiteLLM). To fix a running
+app deployed on `latest`:
+
+```bash
+az webapp config container set -g AIRegistry -n airegistry \
+  --container-image-name budibase/budibase:3.22.0
+# if CouchDB complains about newer-version data (only if nothing built yet), reset the share:
+az webapp stop -g AIRegistry -n airegistry
+az storage share-rm delete --storage-account airegistrystore -g AIRegistry -n airegistry-couch --yes
+az storage share-rm create --storage-account airegistrystore -g AIRegistry -n airegistry-couch --quota 50
+az webapp start -g AIRegistry -n airegistry
+```
+
+To move to a newer Budibase later, test a tag locally with `docker compose` first; only
+bump past 3.25 once the upstream LiteLLM-on-self-host startup bug is resolved.
+
 ## Notes
 
 - **Re-running the deployment** regenerates the auto `newGuid()` secrets, which can
