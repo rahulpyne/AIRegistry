@@ -107,6 +107,24 @@ the app (one click). The app *design* is safe in CouchDB on the persisted share.
 form has no file-upload fields, so no user data lives in MinIO. For full durability of
 everything, run Budibase on a small VM with an ext4 data disk instead of App Service.
 
+## Troubleshooting: container start timeout / still 502 after the MinIO fix
+
+If logs show `Container did not start within expected time limit of 230s ... terminated
+during site startup`: the Budibase all-in-one stack boots slowly on one CPU. The Bicep
+sets `WEBSITES_CONTAINER_START_TIME_LIMIT=1800`; if you deployed an older revision, add it:
+
+```bash
+az webapp config appsettings set -g AIRegistry -n airegistry \
+  --settings WEBSITES_CONTAINER_START_TIME_LIMIT=1800
+```
+
+Then allow 5–10 min on B1. If it still won't serve, B1 (1.75 GB) is underpowered for this
+stack — scale up (Budibase's own minimum is ~2 GB):
+
+```bash
+az appservice plan update -g AIRegistry -n airegistry-plan --sku B2
+```
+
 ## Notes
 
 - **Re-running the deployment** regenerates the auto `newGuid()` secrets, which can

@@ -76,6 +76,7 @@ az webapp config storage-account add -g "$RG" -n "$WEBAPP" \
   --access-key "$STORAGE_KEY" --mount-path /data/couch -o none
 az webapp config appsettings set -g "$RG" -n "$WEBAPP" --settings \
   WEBSITES_PORT=80 WEBSITES_ENABLE_APP_SERVICE_STORAGE=true \
+  WEBSITES_CONTAINER_START_TIME_LIMIT=1800 \
   JWT_SECRET="$JWT_SECRET" MINIO_ACCESS_KEY="$MINIO_ACCESS_KEY" \
   MINIO_SECRET_KEY="$MINIO_SECRET_KEY" REDIS_PASSWORD="$REDIS_PASSWORD" \
   INTERNAL_API_KEY="$INTERNAL_API_KEY" COUCHDB_USER="$COUCHDB_USER" \

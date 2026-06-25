@@ -123,6 +123,8 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       appSettings: [
         { name: 'WEBSITES_PORT', value: '80' }
         { name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE', value: 'true' }
+        // Budibase all-in-one is heavy; default 230s boot limit kills it mid-startup.
+        { name: 'WEBSITES_CONTAINER_START_TIME_LIMIT', value: '1800' }
         { name: 'MAIN_PORT', value: '80' }
         { name: 'APP_PORT', value: '4002' }
         { name: 'WORKER_PORT', value: '4003' }
