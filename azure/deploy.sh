@@ -19,6 +19,9 @@ DB="${DB:-airegistry}"
 COLL="${COLL:-registry_entries}"
 FREE_TIER="${FREE_TIER:-true}"
 
+echo "==> Ensure resource group '$RG' ($LOCATION)"
+az group create -n "$RG" -l "$LOCATION" -o none
+
 echo "==> Ensure Cosmos DB for MongoDB account '$COSMOS_ACCT' exists"
 if ! az cosmosdb show -n "$COSMOS_ACCT" -g "$RG" -o none 2>/dev/null; then
   FREE_FLAG=""; [ "$FREE_TIER" = "true" ] && FREE_FLAG="--enable-free-tier true"

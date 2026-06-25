@@ -23,12 +23,14 @@ cd AIRegistry/app
 bash ../azure/deploy.sh
 ```
 
-This will:
-1. Ensure the Cosmos DB for MongoDB account `airegistry-cosmos` (free tier) with database
+This will (creating everything from scratch — safe to run even after the resource group
+was deleted):
+1. Ensure the `AIRegistry` resource group exists.
+2. Ensure the Cosmos DB for MongoDB account `airegistry-cosmos` (free tier) with database
    `airegistry` and collection `registry_entries` exists (reuses it if already there).
-2. `az webapp up` — create the `airegistry-form` web app on the **F1 (free)** plan and
+3. `az webapp up` — create the `airegistry-form` web app on the **F1 (free)** plan and
    build/upload the Node app.
-3. Set the Cosmos connection string + DB/collection as application settings.
+4. Set the Cosmos connection string + DB/collection as application settings.
 
 Open **https://airegistry-form.azurewebsites.net**, fill the form, submit — then check
 the document in Azure Portal → Cosmos `airegistry-cosmos` → Data Explorer →
