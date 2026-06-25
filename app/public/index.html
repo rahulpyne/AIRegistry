@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Registry Intake — PacifiCan</title>
-  <link href="https://unpkg.com/survey-core@1.11.11/survey-core.min.css" rel="stylesheet" />
+  <link href="https://unpkg.com/survey-core@2.5.30/survey-core.min.css" rel="stylesheet" />
   <style>
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f5f6f8; }
     .topbar { background: #26374a; color: #fff; padding: 14px 22px; }
@@ -12,7 +12,8 @@
     .topbar span { font-size: 12px; opacity: .8; }
     #surveyContainer { max-width: 960px; margin: 18px auto; padding: 0 12px 40px; }
     .banner { max-width: 960px; margin: 14px auto 0; padding: 0 12px; }
-    .banner .err { background: #f3d9d9; color: #8b1f1f; padding: 10px 14px; border-radius: 6px; display: none; }
+    .banner .msg { padding: 10px 14px; border-radius: 6px; display: none; }
+    .banner .err { background: #f3d9d9; color: #8b1f1f; }
   </style>
 </head>
 <body>
@@ -20,36 +21,43 @@
     <h1>AI Registry Intake</h1>
     <span>PacifiCan · Strategy Framework for AI · UNCLASSIFIED (Protected B when completed)</span>
   </div>
-  <div class="banner"><div id="errBanner" class="err"></div></div>
+  <div class="banner"><div id="banner" class="msg"></div></div>
   <div id="surveyContainer"></div>
 
-  <script src="https://unpkg.com/survey-core@1.11.11/survey.core.min.js"></script>
-  <script src="https://unpkg.com/survey-js-ui@1.11.11/survey-js-ui.min.js"></script>
+  <script src="https://unpkg.com/survey-core@2.5.30/survey.core.min.js"></script>
+  <script src="https://unpkg.com/survey-js-ui@2.5.30/survey-js-ui.min.js"></script>
   <script src="survey.js"></script>
   <script>
-    const survey = new Survey.Model(window.surveyJson);
-
-    // On completion, POST the flat result to the API; the server reshapes + stores it.
-    survey.onComplete.add(async (sender, options) => {
-      options.showSaveInProgress("Saving your submission…");
-      try {
-        const res = await fetch("/api/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(sender.data),
-        });
-        const out = await res.json();
-        if (!res.ok) throw new Error(out.error || "Save failed");
-        options.showSaveSuccess("Submitted. Reference: " + out.id);
-      } catch (e) {
-        options.showSaveError("Could not save: " + e.message);
-        const b = document.getElementById("errBanner");
-        b.textContent = "Submission failed: " + e.message;
-        b.style.display = "block";
+    function showBanner(text) {
+      const b = document.getElementById("banner");
+      b.textContent = text; b.className = "msg err"; b.style.display = "block";
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+      if (typeof Survey === "undefined" || !window.surveyJson) {
+        showBanner("Form library failed to load. Check your network/CDN access.");
+        return;
       }
-    });
+      const survey = new Survey.Model(window.surveyJson);
 
-    document.addEventListener("DOMContentLoaded", () => survey.render("surveyContainer"));
+      survey.onComplete.add(async (sender, options) => {
+        options.showSaveInProgress("Saving your submission…");
+        try {
+          const res = await fetch("/api/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(sender.data),
+          });
+          const out = await res.json();
+          if (!res.ok) throw new Error(out.error || "Save failed");
+          options.showSaveSuccess("Submitted. Reference: " + out.id);
+        } catch (e) {
+          options.showSaveError("Could not save: " + e.message);
+          showBanner("Submission failed: " + e.message);
+        }
+      });
+
+      survey.render(document.getElementById("surveyContainer"));
+    });
   </script>
 </body>
 </html>
